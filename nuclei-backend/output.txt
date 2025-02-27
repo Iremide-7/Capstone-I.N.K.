@@ -1,14 +1,7 @@
-[deprecated-tls:tls_1.1] [ssl] [info] www.google.com:443 ["tls11"]
-[tls-version] [ssl] [info] www.google.com:443 ["tls10"]
-[weak-cipher-suites:tls-1.0] [ssl] [low] www.google.com:443 ["[tls10 TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA]"]
-[tls-version] [ssl] [info] www.google.com:443 ["tls11"]
-[deprecated-tls:tls_1.0] [ssl] [info] www.google.com:443 ["tls10"]
-[weak-cipher-suites:tls-1.1] [ssl] [low] www.google.com:443 ["[tls11 TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA]"]
-[tls-version] [ssl] [info] www.google.com:443 ["tls12"]
-[tls-version] [ssl] [info] www.google.com:443 ["tls13"]
-[security-txt] [http] [info] https://www.google.com/.well-known/security.txt ["https://g.co/vulnz","mailto:security@google.com"]
-[addeventlistener-detect] [http] [info] https://www.google.com/
-[apple-app-site-association] [http] [info] https://www.google.com/apple-app-site-association ["4ANB9W7R3P.com.google.Stella.dev","EQHXZ8M8AV.com.google.LightCycle","4ANB9W7R3P.com.google.GoogleMobile.dogfood","EQHXZ8M8AV.com.google.Stella","EQHXZ8M8AV.com.google.Stella.dev","4ANB9W7R3P.com.google.Stella","EQHXZ8M8AV.com.google.Maps","EQHXZ8M8AV.com.google.GoogleMobile.dev","EQHXZ8M8AV.com.google.GoogleDigitalEditions.dev","4ANB9W7R3P.com.google.Czimuth","4ANB9W7R3P.com.google.LightCycle.enterprise","4ANB9W7R3P.com.google.GoogleDigitalEditions.enterprise","EQHXZ8M8AV.com.google.ShoppingExpress.dev","4ANB9W7R3P.com.google.Azimuth","","EQHXZ8M8AV.com.google.calendar","EQHXZ8M8AV.com.google.Dzimuth","4ANB9W7R3P.com.google.LightCycle.fishfood","4ANB9W7R3P.com.google.GoogleDigitalEditions.rc","EQHXZ8M8AV.com.google.GoogleDigitalEditions","4ANB9W7R3P.com.google.SendKitDemo.enterprise","4ANB9W7R3P.com.google.Rzimuth","EQHXZ8M8AV.com.google.LightCycle.dev","4ANB9W7R3P.com.google.GoogleMobile.rc","4ANB9W7R3P.com.google.GoogleDigitalEditions.daily","EQHXZ8M8AV.com.google.ShoppingExpress","4ANB9W7R3P.com.google.ShoppingExpress.enterprise","4ANB9W7R3P.com.google.ShoppingExpress.nightly","EQHXZ8M8AV.com.google.SendKitDemo.dev","EQHXZ8M8AV.com.google.GoogleMobile","4ANB9W7R3P.com.google.GoogleMobile.fishfood","4ANB9W7R3P.com.google.GoogleMobile.qadogfood"]
-[favicon-detect:google] [http] [info] https://www.google.com/favicon.ico ["708578229"]
-[robots-txt] [http] [info] https://www.google.com/robots.txt
-[robots-txt-endpoint] [http] [info] https://www.google.com/robots.txt
+[waf-detect:apachegeneric] [http] [info] http://172.28.7.80/DVWA
+[ssh-auth-methods] [javascript] [info] 172.28.7.80:22 ["["publickey","password"]"]
+[ssh-password-auth] [javascript] [info] 172.28.7.80:22
+[ssh-server-enumeration] [javascript] [info] 172.28.7.80:22 ["SSH-2.0-OpenSSH_9.6p1 Ubuntu-3ubuntu13.8"]
+[ssh-sha1-hmac-algo] [javascript] [info] 172.28.7.80:22
+[openssh-detect] [tcp] [info] 172.28.7.80:22 ["SSH-2.0-OpenSSH_9.6p1 Ubuntu-3ubuntu13.8"]
+[git-config] [http] [medium] http://172.28.7.80/DVWA/.git/config

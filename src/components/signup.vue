@@ -1,5 +1,5 @@
 
-<template>
+<!-- <template>
     
       <h2>Sign Up</h2>
       <form @submit.prevent="submitForm">
@@ -31,19 +31,63 @@
       };
     },
     methods: {
-      submitForm() {
-        if (!this.form.name || !this.form.email || !this.form.password) {
-          alert("All fields are required!");
-          return;
-        }
+    async handleSignup() {
+      try {
+        const response = await this.$axios.post('/api/signup', {
+          username: this.username,
+          password: this.password
+        });
+        console.log('User signed up', response.data);
+      } catch (err) {
+        console.error('Error signing up', err.response.data);
+      }
+    }
+  }
+}; -->
+  <!-- </script>
+   -->
+   <template>
+    <div>
+      <h2>Sign Up</h2>
+      <form @submit.prevent="handleSignup">
+        <div>
+          <label for="username">Username</label>
+          <input v-model="username" id="username" type="text" required />
+        </div>
+        <div>
+          <label for="password">Password</label>
+          <input v-model="password" id="password" type="password" required />
+        </div>
+        <button type="submit">Sign Up</button>
+      </form>
+    </div>
+  </template>
   
-        // Mock API request
-        setTimeout(() => {
-          this.message = "Signup successful!";
-          console.log("User signed up:", this.form);
-        }, 1000);
+  <script>
+  import axios from 'axios';
+  
+  export default {
+    data() {
+      return {
+        username: '',
+        password: '',
+      };
+    },
+    methods: {
+      async handleSignup() {
+        try {
+          const response = await axios.post('http://localhost:3000/api/signup', {
+            username: this.username,
+            password: this.password,
+          });
+          console.log('Signup successful:', response.data);
+          this.$router.push('/login');  // Redirect to login after successful signup
+        } catch (error) {
+          console.error('Error during signup:', error.response?.data || error.message);
+        }
       },
     },
   };
   </script>
+  
   
