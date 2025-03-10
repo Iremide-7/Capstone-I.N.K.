@@ -11,12 +11,13 @@ const app = express();
 const PORT = 3000;
 
 app.use(cors({
-    origin: 'http://localhost:5173',  // Allow requests from your frontend (Vue app)
-    methods: 'GET,POST',
+    origin: 'http://localhost:5173',  
+    methods: 'GET,POST,OPTIONS',
+    credentials: true
 }));
 app.use(express.json());
 
-const nucleiPath = "C:\\Users\\ikadiri\\nuclei\\nuclei.exe"; // Full path to Nuclei
+const nucleiPath = "C:\\Users\\ikadiri\\nuclei\\nuclei.exe"; 
 
 mongoose.connect('mongodb://localhost:27017/Capstone', { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
@@ -36,23 +37,28 @@ userSchema.pre('save', async function (next) {
 });
 const User = mongoose.model('User', userSchema, 'user-profiles');
 
-// Define comment schema
 const commentSchema = new mongoose.Schema({
-    username: { type: String, required: true },
-    commentText: { type: String, required: true },
+    vulnerabilityName: { type: String, required: true },
+    name: { type: String, required: true },
+    definitionText: { type: String, required: true },
+    fixText: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
 });
 const Comment = mongoose.model('Comment', commentSchema, 'user-comments');
 
 // Define scan result schema
-const scanResultSchema = new mongoose.Schema({
-    targetUrl: { type: String, required: true },
-    vulnerabilities: [{ type: String }],
+const scanReportSchema = new mongoose.Schema({
+    target: { type: String, required: true },
+    vulnerabilities: [{
+        name: { type: String, required: true },
+        protocol: { type: String, required: true },
+        target: { type: String, required: true }
+    }],
     createdAt: { type: Date, default: Date.now },
 });
-const ScanResult = mongoose.model('ScanResult', scanResultSchema, 'scan-results');
+const ScanReport = mongoose.model('ScanReport', scanReportSchema, 'scan-report');
 
-// Authentication middleware
+// Authentication middleware(i had chatgpt help with this part)
 const authMiddleware = (req, res, next) => {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     if (!token) {
@@ -67,7 +73,7 @@ const authMiddleware = (req, res, next) => {
     }
 };
 
-// Route to fetch all comments (for public display)
+
 
 app.get('/api/comments', async (req, res) => {
     try {
@@ -80,15 +86,14 @@ app.get('/api/comments', async (req, res) => {
 });
 
 
-// Route to submit a new comment (requires login)
 app.post('/api/comments', authMiddleware, async (req, res) => {
-    const { commentText } = req.body;
-    const { username } = req.user; // The logged-in user's username from JWT
-    if (!commentText.trim()) {
+    const { vulnerabilityName, name, definitionText, fixText } = req.body;
+   
+    if (!definitionText.trim() || !fixText.trim()) {
         return res.status(400).json({ msg: 'Comment cannot be empty' });
     }
     try {
-        const newComment = new Comment({ username, commentText });
+        const newComment = new Comment({  vulnerabilityName, name, definitionText, fixText});
         await newComment.save();
         res.status(201).json({ msg: 'Comment added successfully' });
     } catch (err) {
@@ -96,23 +101,29 @@ app.post('/api/comments', authMiddleware, async (req, res) => {
         res.status(500).json({ msg: 'Error submitting comment' });
     }
 });
+app.get('/api/comments/search', async (req, res) => {
+    try {
+        const { query } = req.query;  // Get the search term from the request
 
-// Route to fetch the latest scan result
-// app.get('/api/scans/recent', authMiddleware, async (req, res) => {
-//     try {
-//         const recentScan = await ScanResult.findOne().sort({ createdAt: -1 }).limit(1); // Get the latest scan
-//         if (!recentScan) {
-//             return res.status(404).json({ msg: 'No scan results found' });
-//         }
-//         res.json(recentScan);
-//     } catch (err) {
-//         console.error(err);
-//         res.status(500).json({ msg: 'Error fetching scan results' });
-//     }
-// });
+        if (!query || query.trim() === "") {
+            return res.status(400).json({ msg: "Search query cannot be empty" });
+        }
+
+        // Perform a case-insensitive search for vulnerability names
+        const comments = await Comment.find({ 
+            vulnerabilityName: { $regex: query, $options: "i" } 
+        }).sort({ createdAt: -1 });
+
+        res.json(comments);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: 'Error searching comments' });
+    }
+});
+
+
 
 // Routes for signup and login
-// Signup Route
 app.post('/api/signup', async (req, res) => {
     const { username, password } = req.body;
     try {
@@ -129,7 +140,6 @@ app.post('/api/signup', async (req, res) => {
     }
 });
 
-// Login Route
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     try {
@@ -149,18 +159,24 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// Scan start route
-app.post("/start-scan", (req, res) => {
-    const { targetUrl } = req.body;
 
-    if (!targetUrl) {
-        return res.status(400).json({ error: "Target URL is required" });
+app.post("/start-scan", (req, res) => {
+    const { targetUrl, targetIP } = req.body;
+    let command;
+
+    if (targetIP) {
+        command = `${nucleiPath} -target ${targetIP} -t network/ -o output.txt`;
+        
+    }else if(targetUrl){
+        command = `${nucleiPath} -u ${targetUrl} -t http -o output.txt`;
+    }else{
+        return res.status(400).json({ error: "Target IP is required" });
     }
 
     const outputFilePath = path.join(__dirname, "output.txt");
 
     // Run Nuclei scan and save results to a plain text file
-    exec(`${nucleiPath} -u ${targetUrl} -o ${outputFilePath}`, (err, stdout, stderr) => {
+    exec(command, (err, stdout, stderr) => {
         if (err) {
             console.error(`Error running Nuclei: ${err.message}`);
             return res.status(500).json({ error: "Failed to run Nuclei scan" });
@@ -175,28 +191,32 @@ app.post("/start-scan", (req, res) => {
                 return res.status(500).json({ error: "Failed to read scan results" });
             }
 
+            if (!data||!data.trim()){
+                console.log("no vulnerbility found")
+                return res.status(200).json({ msg: "Scan completed successfully", vulnerabilities: [] });
+            }
+
+         
             try {
                 const rawLines = data.trim().split("\n");
-
+                console.log("Raw Nuclei Output:\n", data);
                 // Convert plain text to structured JSON using regex
                 const regex = /^\[([^\]]+)] \[([^\]]+)] \[([^\]]+)] ([^\[]+)$/gm;
-                const vulnerabilities = rawLines.map(line => {
-                    const match = regex.exec(line);
-                    if (!match) return null;
+                const regex2 = /^\[([^\]]+)] \[([^\]]+)] \[([^\]]+)] ([^\[]+)\s+\["([^\]]+)"\]$/gm; 
+                const vulnerabilities = [];
+                    let match ;
+                    while ((match = regex.exec(data)) !== null) {
+                        vulnerabilities.push({
+                            name: match[1],           // Vulnerability name
+                            protocol: match[2],       // Protocol (http, network, etc.)
+                            target: match[4].trim()   // Target URL/IP
+                        });
+                }
+                console.log("Parsed Vulnerabilities:", vulnerabilities);
 
-                    return {
-                        name: match[1],           // Vulnerability name
-                        protocol: match[2],       // Protocol (http)
-                        severity: capitalize(match[3]),  // Severity (info, critical)
-                        target: match[4].trim()   // Target URL/IP
-                    };
-                }).filter(result => result !== null);
 
                 // Save to database
-                const newScanResult = new ScanResult({
-                    targetUrl,
-                    vulnerabilities: vulnerabilities.map(vul => vul.name), // Save only names for now
-                });
+                const newScanResult = new ScanReport({target: targetIP || targetUrl, vulnerabilities});
                 await newScanResult.save();
 
                 res.json({ numOfVulnerabilities: vulnerabilities.length, vulnerabilities });
@@ -220,7 +240,4 @@ app.get("/download-scan-results", (req, res) => {
     });
 });
 
-// Capitalize function for severity levels
-const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1);
-
-app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));

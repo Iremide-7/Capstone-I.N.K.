@@ -36,6 +36,7 @@ body {
   color: #333;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
 /* Container for Main Content */
@@ -182,4 +183,27 @@ form {
   .nav-links {
     flex-direction: column;
   }
+}
+/* Toast Notifications */
+.toast {
+  background-color: #3498db;
+  color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 999;
+  display: none;
+  transition: opacity 0.5s ease;
+}
+
+.toast.show {
+  display: block;
+  opacity: 1;
+}
+
+.toast.hide {
+  opacity: 0;
+  display: none;
 }
